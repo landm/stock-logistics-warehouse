@@ -54,20 +54,7 @@ class ResConfigSettings(models.TransientModel):
         help="Choose the field of the product which will be used to compute "
         "potential.\nIf empty, Quantity On Hand is used.\n"
         "Only the quantity fields have meaning for computing stock",
+        config_parameter='stock_available_mrp_based_on',
+        default='qty_available'
+
     )
-
-    @api.model
-    def get_values(self):
-        res = super(ResConfigSettings, self).get_values()
-        res.update(
-            stock_available_mrp_based_on=self.env["ir.config_parameter"]
-            .sudo()
-            .get_param("stock_available_mrp_based_on", "qty_available")
-        )
-        return res
-
-    def set_values(self):
-        super(ResConfigSettings, self).set_values()
-        self.env["ir.config_parameter"].sudo().set_param(
-            "stock_available_mrp_based_on", self.stock_available_mrp_based_on
-        )

@@ -20,12 +20,12 @@ class ProductProduct(models.Model):
     def _compute_available_quantities(self):
         super(ProductProduct, self)._compute_available_quantities()
 
-    @api.multi
     def _get_bom_id_domain(self):
         """
         Real multi domain
         :return:
         """
+
         return [
             '|',
             ('product_id', 'in', self.ids),
@@ -34,7 +34,6 @@ class ProductProduct(models.Model):
             ('product_tmpl_id', 'in', self.mapped('product_tmpl_id.id'))
         ]
 
-    @api.multi
     @api.depends('product_tmpl_id')
     def _compute_bom_id(self):
         bom_obj = self.env['mrp.bom']
@@ -48,10 +47,12 @@ class ProductProduct(models.Model):
                 (not b.product_id and
                  b.product_tmpl_id == product.product_tmpl_id)
             )
-            if product_boms:
-                product.bom_id = first(product_boms)
 
-    @api.multi
+            if len(product_boms):
+                product.bom_id = first(product_boms)
+            else:
+                product.bom_id = False
+
     def _compute_available_quantities_dict(self):
         res, stock_dict = super(ProductProduct,
                                 self)._compute_available_quantities_dict()
@@ -124,7 +125,6 @@ class ProductProduct(models.Model):
 
         return res, stock_dict
 
-    @api.multi
     def _explode_boms(self):
         """
         return a dict by product_id of exploded bom lines
@@ -145,6 +145,7 @@ class ProductProduct(models.Model):
         needs = Counter()
         for bom_component in exploded_components:
             component = bom_component[0].product_id
-            needs += Counter({component: bom_component[1]['qty']})
+            if component.type == 'product':
+                needs += Counter({component: bom_component[1]['qty']})
 
         return needs
