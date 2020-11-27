@@ -5,6 +5,9 @@ from collections import Counter
 from odoo import api, fields, models
 from odoo.fields import first
 
+import logging
+_logger = logging.getLogger(__name__)
+
 
 class ProductProduct(models.Model):
 
@@ -58,6 +61,11 @@ class ProductProduct(models.Model):
                                 self)._compute_available_quantities_dict()
         # compute qty for product with bom
         product_with_bom = self.filtered('bom_id')
+        product_pack = self.filtered('pack_ok')
+        if len(product_pack):
+            for packs in product_pack:
+                res[packs.id]['potential_qty'] = min([x.product_id.potential_qty / x.quantity for x in packs.pack_line_ids])
+                res[packs.id]['immediately_usable_qty'] += res[packs.id]['potential_qty']
 
         if not product_with_bom:
             return res, stock_dict
