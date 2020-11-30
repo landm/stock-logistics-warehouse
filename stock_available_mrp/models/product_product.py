@@ -62,11 +62,14 @@ class ProductProduct(models.Model):
         # compute qty for product with bom
         product_with_bom = self.filtered('bom_id')
         product_pack = self.filtered('pack_ok')
-        if len(product_pack):
+        if product_pack:
             for packs in product_pack:
-                res[packs.id]['potential_qty'] = min([x.product_id.potential_qty / x.quantity for x in packs.pack_line_ids])
-                res[packs.id]['immediately_usable_qty'] += res[packs.id]['potential_qty']
-
+                if len(packs.pack_line_ids):
+                    res[packs.id]['potential_qty'] = min([x.product_id.potential_qty / x.quantity for x in packs.pack_line_ids])
+                    res[packs.id]['immediately_usable_qty'] += res[packs.id]['potential_qty']
+                else:
+                    res[packs.id]['potential_qty'] = 0.0
+                    res[packs.id]['immediately_usable_qty'] = 0.0
         if not product_with_bom:
             return res, stock_dict
         icp = self.env['ir.config_parameter']
